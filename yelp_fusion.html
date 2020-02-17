@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Yelp Business</title>
+    <link rel="stylesheet" type="text/css" href="yelp.css" />
+  </head>
+
+  <body>
+    <div id="businessList">Loading Business...</div>
+    <div id="reviewList">
+      <li><button id="myBtn" class="button">Back</button></li>
+    </div>
+
+    <script>
+      (function() {
+        const API_KEY =
+          "Bearer 9LxMCkmgWMzEYnX1Xw16sCSXvwZ_j54GZ5Eirdbxz5RMLsOyaJmQjOEMqcWA_cCI-G1OwEbZchagNGQgkOalQ-QLeI8D7hqnnUZiJbieq_Ty8YPZ4WBAwH_eHLdFXnYx";
+
+        const cors_url = "https://cors-anywhere.herokuapp.com";
+        const yelp_business_url =
+          "https://api.yelp.com/v3/businesses/search?location=Alpharetta&term=icecream&sort_by=rating&limit=5";
+        let businesses;
+
+        function findBusinessName(businessId) {
+          const business = businesses.find(
+            business => business.id === businessId
+          );
+          return business ? business.name : "";
+        }
+        function addEventListenerOnBackBtn() {
+          document.getElementById("myBtn").addEventListener("click", event => {
+            renderBusinessInfo();
+          });
+        }
+        function renderBusinessReviews(reviewData, businessId) {
+          let reviewOutput = `<h2>Reviews for ${findBusinessName(
+            businessId
+          )}</h2>`;
+          reviewData.reviews.forEach(function(review) {
+            reviewOutput += `<ul class="business">
+              <li>Reviews: ${review.text}</li>
+              <li>Reviewer: ${review.user.name}</li></ul>
+                          `;
+          });
+          document.getElementById("businessList").innerHTML = reviewOutput;
+          addEventListenerOnBackBtn();
+        }
+
+        function getBusinessReviews(businessId) {
+          const yelp_business_review_url =
+            cors_url +
+            "/" +
+            "https://api.yelp.com/v3/businesses/" +
+            businessId +
+            "/reviews";
+          fetch(yelp_business_review_url, {
+            headers: { Authorization: API_KEY }
+          })
+            .then(response => response.json())
+            .then(reviewData => renderBusinessReviews(reviewData, businessId));
+        }
+        function addEventListenerOnReviewsLink() {
+          document
+            .getElementById("businessList")
+            .addEventListener("click", event => {
+              let businessId = event.target.id;
+              if (event.target.name === "reviewLink") {
+                document.getElementById("businessList").innerText =
+                  "Getting reviews...";
+                getBusinessReviews(businessId);
+              }
+            });
+        }
+        function renderBusinessInfo() {
+          debugger;
+          let output = `<h2>IceCream Business</h2>`;
+          businesses.forEach(function(business) {
+            output += `
+            <ul class="business">
+              <li class="heading">Business Name: ${business.name}</li>
+              <li> Address:
+                ${business.location.address1},
+                ${business.location.city}
+              </li>
+              <li>Rating: ${business.rating}</li>
+              <li >
+                <a href="#" id="${business.id}" class="button" name="reviewLink"> Click to See Reviews</a>
+              </li>              
+            </ul>`;
+          });
+          document.getElementById("businessList").innerHTML = output;
+          addEventListenerOnReviewsLink();
+        }
+
+        function getBusinessData() {
+          const requestData = fetch(cors_url + "/" + yelp_business_url, {
+            headers: { Authorization: API_KEY }
+          })
+            .then(response => response.json())
+            .then(data => (businesses = data.businesses))
+            .then(data => renderBusinessInfo());
+        }
+        getBusinessData();
+      })();
+    </script>
+  </body>
+</html>
